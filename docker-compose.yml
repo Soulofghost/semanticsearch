@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  semanticsearch-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: semanticsearch-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=SemanticSearch
+      - DEBUG=False
+      - SEMANTICSEARCH_DB_PATH=/app/data/semanticsearch.db
+    volumes:
+      - semanticsearch-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  semanticsearch-data:
+    driver: local

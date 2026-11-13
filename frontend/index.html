@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SemanticSearch | Hybrid Neural & Lexical Document Retrieval</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="neural-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 3v6m0 6v6M3 12h6m6 0h6"></path>
+            <circle cx="12" cy="3" r="2"></circle>
+            <circle cx="12" cy="21" r="2"></circle>
+            <circle cx="3" cy="12" r="2"></circle>
+            <circle cx="21" cy="12" r="2"></circle>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1>Semantic<span>Search</span></h1>
+          <span class="sub">Dense Vector & BM25 Hybrid Retrieval</span>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button id="btn-toggle-ingest" class="btn btn-outline">+ Ingest Document</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Metrics Ribbon -->
+  <section class="metrics-bar">
+    <div class="metrics-inner">
+      <div class="metric-cell">
+        <span class="m-label">Indexed Documents</span>
+        <span class="m-val" id="metric-docs">--</span>
+      </div>
+      <div class="metric-cell">
+        <span class="m-label">Vectorized Chunks</span>
+        <span class="m-val" id="metric-chunks">--</span>
+      </div>
+      <div class="metric-cell">
+        <span class="m-label">Queries Executed</span>
+        <span class="m-val" id="metric-searches">--</span>
+      </div>
+      <div class="metric-cell">
+        <span class="m-label">Avg Retrieval Latency</span>
+        <span class="m-val highlight" id="metric-latency">-- ms</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main View -->
+  <main class="app-main">
+    <!-- Ingestion Modal / Panel -->
+    <div id="ingest-drawer" class="card-box drawer hidden">
+      <div class="drawer-header">
+        <div>
+          <h2>Index New Document Corpus</h2>
+          <p>Segment text into overlapping semantic chunks, compute 128-dim dense vectors, and build BM25 term matrices.</p>
+        </div>
+        <button id="btn-close-drawer" class="btn-icon">&times;</button>
+      </div>
+
+      <div class="preset-row">
+        <span>Load Sample Corpus:</span>
+        <button type="button" class="btn-chip" data-sample="raft">Raft Consensus Protocol</button>
+        <button type="button" class="btn-chip" data-sample="wal">Database Write-Ahead Logging</button>
+        <button type="button" class="btn-chip" data-sample="zerotrust">Zero-Trust Security Architecture</button>
+      </div>
+
+      <form id="ingest-form">
+        <div class="form-grid">
+          <div class="form-group flex-2">
+            <label for="doc-title">Document Title</label>
+            <input type="text" id="doc-title" required class="input-field" placeholder="e.g. Distributed Consensus in Modern Storage">
+          </div>
+          <div class="form-group">
+            <label for="doc-author">Author / Source</label>
+            <input type="text" id="doc-author" value="Architecture Team" class="input-field">
+          </div>
+          <div class="form-group">
+            <label for="doc-tags">Tags (comma-separated)</label>
+            <input type="text" id="doc-tags" value="distributed-systems, consensus, raft" class="input-field">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="doc-content">Full Text Content</label>
+          <textarea id="doc-content" rows="8" required class="input-field textarea" placeholder="Paste comprehensive document content..."></textarea>
+        </div>
+
+        <div class="drawer-actions">
+          <button type="button" id="btn-cancel-ingest" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="btn-submit-doc" class="btn btn-primary">Process & Vectorize Document</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Search Console -->
+    <section class="search-console card-box">
+      <form id="search-form" class="search-bar-wrap">
+        <div class="input-wrap">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="query-input" placeholder="Search by concept, intent, or keywords (e.g. How do nodes elect a leader in cluster failure?)" required class="query-field">
+        </div>
+        <button type="submit" id="btn-search" class="btn btn-primary">Search</button>
+      </form>
+
+      <!-- Query Quick Chips -->
+      <div class="chips-row">
+        <span class="chips-label">Try Examples:</span>
+        <span class="chip-item" data-q="leader election failure timeout">Leader election failure</span>
+        <span class="chip-item" data-q="write ahead log crash recovery checkpoint">WAL crash recovery</span>
+        <span class="chip-item" data-q="continuous identity verification and microsegmentation">Zero-trust microsegmentation</span>
+        <span class="chip-item" data-q="distributed consensus safety invariants">Consensus safety</span>
+      </div>
+
+      <!-- Search Controls Bar -->
+      <div class="search-controls">
+        <div class="control-group">
+          <span class="control-label">Retrieval Mode:</span>
+          <div class="mode-toggle">
+            <button type="button" class="mode-btn active" data-mode="HYBRID">Hybrid (Dense + BM25)</button>
+            <button type="button" class="mode-btn" data-mode="SEMANTIC">Semantic Only</button>
+            <button type="button" class="mode-btn" data-mode="LEXICAL">Lexical BM25 Only</button>
+          </div>
+        </div>
+
+        <div class="control-group slider-group" id="alpha-slider-wrap">
+          <span class="control-label">Blend Ratio: <strong id="alpha-label">70% Semantic</strong></span>
+          <input type="range" id="alpha-slider" min="0" max="100" value="70" class="range-slider">
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">Top Results:</span>
+          <select id="top-k-select" class="select-field">
+            <option value="3">Top 3</option>
+            <option value="5" selected>Top 5</option>
+            <option value="10">Top 10</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Search Results / Corpus Overview Split -->
+    <div class="content-split">
+      <!-- Search Results Area -->
+      <section class="results-column">
+        <div class="results-header">
+          <h2 id="results-headline">Ranked Search Results</h2>
+          <span class="results-meta" id="results-meta">Awaiting query...</span>
+        </div>
+        <div id="results-container" class="results-list">
+          <div class="empty-placeholder">
+            <div class="placeholder-icon">🔍</div>
+            <h3>Execute a hybrid semantic query</h3>
+            <p>Type a natural language concept or select an example above to evaluate neural vector and lexical rankings.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Corpus Archive Column -->
+      <aside class="corpus-column card-box">
+        <div class="corpus-header">
+          <h3>Corpus Index</h3>
+          <span class="badge" id="corpus-count">0 Docs</span>
+        </div>
+        <div class="doc-list" id="doc-list">
+          <div class="loading-state">Loading document index...</div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
